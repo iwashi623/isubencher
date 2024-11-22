@@ -7,6 +7,6 @@ RUN go mod download -x
 RUN go build -o /app/bench-runner
 
 # Makefileの実行を実行して、ベンチマーカーのビルドと必要なデータの取得
-RUN make init
+RUN git submodule update && make init
 
 CMD ["/app/bench-runner"]
