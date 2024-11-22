@@ -16,11 +16,11 @@ const (
 
 func main() {
 	// 実行権限を付与
-	err := os.Chmod(binaryPath+"/bench", 0755)
-	if err != nil {
-		fmt.Println("権限変更エラー:", err)
-		return
-	}
+	// err := os.Chmod(binaryPath+"/bench", 0755)
+	// if err != nil {
+	// 	fmt.Println("権限変更エラー:", err)
+	// 	return
+	// }
 
 	s := http.Server{
 		Addr: ":8080",
