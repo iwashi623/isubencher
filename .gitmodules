@@ -1,0 +1,3 @@
+[submodule "kayac-isucon-2022"]
+	path = kayac-isucon-2022
+	url = https://github.com/kayac/kayac-isucon-2022.git
