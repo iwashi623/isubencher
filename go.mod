@@ -1,3 +1,3 @@
-module github.com/iwashi623/kayac-isucon-bench-runner.git
+module github.com/iwashi623/isubencher.git
 
 go 1.23.0
