@@ -5,6 +5,7 @@ init:
 	    exit 1; \
 	fi
 	@echo "Running target: $(ISUCON_NAME)-init"
+	mkdir -p modules && rm -rf modules/*
 	$(MAKE) $(ISUCON_NAME)-init
 
 local-init: 
@@ -13,7 +14,7 @@ local-init:
 	$(MAKE) init
 
 .PHONY: kayac-listen80-init kayac-listen80-prepare-data kayac-listen80-build-bench kayac-listen80-clone
-kayac-listen80-init: kayac-listen80-prepare-data kayac-listen80-build-bench
+kayac-listen80-init: kayac-listen80-clone kayac-listen80-prepare-data kayac-listen80-build-bench
 	cp modules/kayac-isucon-2022/bench/bench .
 	rm modules/kayac-isucon-2022/bench/bench
 	mkdir -p data
