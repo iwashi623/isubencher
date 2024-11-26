@@ -2,50 +2,68 @@ package isubencher
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"strconv"
+
+	kayaclisten80 "github.com/iwashi623/isubencher/kayac-listen80"
+	"github.com/iwashi623/isubencher/options"
 )
 
-type BenchMarkerFunc func(targetIP string, sslEnabled bool, executer func() error) (string, error)
+var bench BenchMarker
 
-// 環境変数からISUCONの大会名を取得する
-func GetIsuconName() (string, error) {
-	iusuconName := os.Getenv("ISUCON_NAME")
-
-	if iusuconName == "" {
-		return "", fmt.Errorf("ISUCON_NAME is not set")
-	}
-
-	return iusuconName, nil
+type Isubencher struct {
+	isuconName string
+	s          http.Server
 }
 
-func getBenchMarker(isuconName string) BenchMarkerFunc {
+func NewIsubencher(
+	port string,
+	isuconName string,
+) *Isubencher {
+	bm, err := newBenchMarker(isuconName)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	bench = bm
+	return &Isubencher{
+		s: http.Server{
+			Addr: ":" + port,
+		},
+		isuconName: isuconName,
+	}
+}
+
+func (i *Isubencher) StartServer() error {
+	http.HandleFunc("/bench", BenchHandler)
+	if err := i.s.ListenAndServe(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type BenchMarker interface {
+	Run(opt *options.BenchOption) (string, error)
+}
+
+func newBenchMarker(isuconName string) (BenchMarker, error) {
 	switch isuconName {
-	case "kayac-isucon-listen80":
-		return KayacIsuconListen80
+	case "kayac-listen80":
+		return kayaclisten80.NewBenchMarker()
 	default:
-		return NoCompetition
+		return nil, fmt.Errorf("no competition")
 	}
-}
-
-func KayacIsuconListen80(targetIP string, sslEnabled bool, executer func() error) (string, error) {
-	return "", fmt.Errorf("No competition")
-}
-
-func NoCompetition(targetIP string, sslEnabled bool, executer func() error) (string, error) {
-	return "", fmt.Errorf("No competition")
 }
 
 func BenchHandler(w http.ResponseWriter, r *http.Request) {
-	targetIP := r.URL.Query().Get("target-ip")
-	if targetIP == "" {
+	targetHost := r.URL.Query().Get("target-host")
+	if targetHost == "" {
 		http.Error(w, "target-ip is required", http.StatusBadRequest)
 		return
 	}
-
 	sslEnabled := r.URL.Query().Get("ssl-enabled")
 	sslFlag, err := strconv.ParseBool(sslEnabled)
 	if err != nil {
@@ -58,17 +76,16 @@ func BenchHandler(w http.ResponseWriter, r *http.Request) {
 		benchProtcol = "https"
 	}
 
-	cmd := exec.Command("./bench", "-target-url", benchProtcol+"://"+targetIP)
+	opt := options.NewBenchOption(
+		targetHost,
+		benchProtcol,
+	)
 
-	out, err := cmd.CombinedOutput()
+	out, err := bench.Run(opt)
 	if err != nil {
-		log.Println(err)
-		if os.IsPermission(err) {
-			fmt.Println("実行権限が不足しています。権限を確認してください。")
-		}
-		http.Error(w, "bench failed", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.Write(out)
+	w.Write([]byte(out))
 }

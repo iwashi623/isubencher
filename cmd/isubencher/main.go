@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"net/http"
 	"os"
 
 	"github.com/iwashi623/isubencher"
@@ -11,19 +9,21 @@ import (
 
 func main() {
 	port := os.Getenv("PORT")
-	s := http.Server{
-		Addr: ":" + port,
+	if port == "" {
+		port = "8080"
+	}
+	isuconName := os.Getenv("ISUCON_NAME")
+	if isuconName == "" {
+		fmt.Println("ISUCON_NAME is not set")
+		os.Exit(1)
 	}
 
-	isuconName, err := isubencher.GetIsuconName()
-	if err != nil {
-		log.Fatal(err)
+	app := isubencher.NewIsubencher(
+		port,
+		isuconName,
+	)
+	if err := app.StartServer(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
-
-	http.HandleFunc("/bench", isubencher.BenchHandler)
-
-	fmt.Println("ISUCON_NAME: " + isuconName)
-	fmt.Println("Server is running on port " + port)
-	s.ListenAndServe()
-
 }
