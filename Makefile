@@ -1,15 +1,15 @@
 .PHONY: local-init init
 init:
-	@if [ -z "$(COMPETITION)" ]; then \
-	    echo "Error: COMPETITION is not set"; \
+	@if [ -z "$(ISUCON_NAME)" ]; then \
+	    echo "Error: ISUCON_NAME is not set"; \
 	    exit 1; \
 	fi
-	@echo "Running target: $(COMPETITION)-init"
-	$(MAKE) $(COMPETITION)-init
+	@echo "Running target: $(ISUCON_NAME)-init"
+	$(MAKE) $(ISUCON_NAME)-init
 
 local-init: 
 	mkdir -p modules && rm -rf modules/*
-	$(MAKE) $(COMPETITION)-clone
+	$(MAKE) $(ISUCON_NAME)-clone
 	$(MAKE) init
 
 .PHONY: kayac-listen80-init kayac-listen80-prepare-data kayac-listen80-build-bench kayac-listen80-clone

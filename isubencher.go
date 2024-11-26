@@ -13,10 +13,10 @@ type BenchMarkerFunc func(targetIP string, sslEnabled bool, executer func() erro
 
 // 環境変数からISUCONの大会名を取得する
 func GetIsuconName() (string, error) {
-	iusuconName := os.Getenv("IUSUCON_NAME")
+	iusuconName := os.Getenv("ISUCON_NAME")
 
 	if iusuconName == "" {
-		return "", fmt.Errorf("IUSUCON_NAME is not set")
+		return "", fmt.Errorf("ISUCON_NAME is not set")
 	}
 
 	return iusuconName, nil

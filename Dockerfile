@@ -1,36 +1,35 @@
 # kayac-listen80-builderステージ
-FROM golang:1.23 AS kayac-listen80-builder
+FROM golang:1.23-bullseye AS bench-builder
 WORKDIR /app
-VOLUME ./
-
-ARG COMPETITION='kayac-listen80'
-ENV PORT=${PORT}
+COPY . /app/
+ARG ISUCON_NAME='kayac-listen80'
 
 # Makefileの実行を実行して、ベンチマーカーのビルドと必要なデータの取得
-RUN cd modules && git clone https://github.com/kayac/kayac-isucon-2022.git  && make init
-RUN mkdir -p /app/
+RUN bash bench-build.sh
 
-
+# ---------------------------------------------------------------------
 # メインステージ
-FROM golang:1.23 AS main-builder
+FROM golang:1.23-bullseye AS main-builder
 WORKDIR /app
 COPY . /app/
 
 RUN go mod download -x
-RUN go build -o /app/bench-runner
+RUN go build -o /app/isubencher /app/cmd/isubencher/main.go
 
 
-# FROM debian:11.11-slim AS runtime
-# WORKDIR /app
+# ---------------------------------------------------------------------
+FROM debian:11.11-slim AS runtime
+WORKDIR /app
 
-# ARG PORT=8080
-# ENV PORT=${PORT}
+ARG PORT=8080
+ENV PORT=${PORT}
+ARG ISUCON_NAME='kayac-listen80'
+ENV ISUCON_NAME=${ISUCON_NAME}
 
-# COPY --from=main-builder /app/bench-runner /app/bench-runner
-# RUN if [ "$STAGE" = "isucon12" ]; then \
-#         cp /app/isucon12/bench /bin/bench; \
-#     elif [ "$STAGE" = "isucon13" ]; then \
-#         cp /app/isucon13/bench /bin/bench; \
-#     else \
-#         echo "Unknown stage: $STAGE" && exit 1; \
-#     fi
+RUN apt-get update && apt-get install -y --no-install-recommends
+
+COPY --from=bench-builder /app/bench /app/bench
+COPY --from=bench-builder /app/data /app/data
+COPY --from=main-builder /app/isubencher /app/isubencher
+
+CMD [ "/app/isubencher" ]
