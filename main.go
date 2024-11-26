@@ -10,8 +10,9 @@ import (
 )
 
 func main() {
+	port := os.Getenv("PORT")
 	s := http.Server{
-		Addr: ":8080",
+		Addr: ":" + port,
 	}
 
 	http.HandleFunc("/bench", benchHandler)
