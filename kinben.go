@@ -34,7 +34,7 @@ func NewKinben(
 
 func RegisterBenchMarker(isuconName string) error {
 	switch isuconName {
-	case "kayac-listen80":
+	case kayaclisten80.IsuconName:
 		return bench.RegisterBenchMarker(kayaclisten80.NewBenchMarker)
 	default:
 		return fmt.Errorf("no competition")
