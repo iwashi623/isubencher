@@ -1,20 +1,20 @@
-package bench
+package runner
 
 import (
 	"github.com/iwashi623/kinben/options"
 )
 
-type BenchMarker interface {
+type BenchRunner interface {
 	IsuconName() string
 	Run(opt *options.BenchOption) (string, error)
 }
 
-var bench BenchMarker
+var br BenchRunner
 
-type BenchCreateFunc func() (BenchMarker, error)
+type BenchCreateFunc func() (BenchRunner, error)
 
-func RegisterBenchMarker(f BenchCreateFunc) (err error) {
-	bench, err = f()
+func RegisterBenchRunner(f BenchCreateFunc) (err error) {
+	br, err = f()
 	if err != nil {
 		return err
 	}
@@ -23,5 +23,5 @@ func RegisterBenchMarker(f BenchCreateFunc) (err error) {
 }
 
 func Run(opt *options.BenchOption) (string, error) {
-	return bench.Run(opt)
+	return br.Run(opt)
 }

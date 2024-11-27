@@ -6,8 +6,8 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/iwashi623/kinben/bench"
 	"github.com/iwashi623/kinben/options"
+	"github.com/iwashi623/kinben/runner"
 )
 
 const (
@@ -17,7 +17,7 @@ const (
 type listen80Bench struct {
 }
 
-func NewBenchMarker() (bench.BenchMarker, error) {
+func NewBenchRunner() (runner.BenchRunner, error) {
 	return &listen80Bench{}, nil
 }
 

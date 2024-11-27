@@ -3,8 +3,8 @@ package kayaclisten80
 import (
 	"net/http"
 
-	"github.com/iwashi623/kinben/bench"
 	"github.com/iwashi623/kinben/options"
+	"github.com/iwashi623/kinben/runner"
 )
 
 func BenchHandler(w http.ResponseWriter, r *http.Request) {
@@ -18,7 +18,7 @@ func BenchHandler(w http.ResponseWriter, r *http.Request) {
 		targetHost,
 	)
 
-	out, err := bench.Run(opt)
+	out, err := runner.Run(opt)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

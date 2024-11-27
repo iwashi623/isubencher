@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/iwashi623/kinben/bench"
 	kayaclisten80 "github.com/iwashi623/kinben/kayac-listen80"
+	"github.com/iwashi623/kinben/runner"
 )
 
 type Kinben struct {
@@ -35,7 +35,7 @@ func NewKinben(
 func RegisterBenchMarker(isuconName string) error {
 	switch isuconName {
 	case kayaclisten80.IsuconName:
-		return bench.RegisterBenchMarker(kayaclisten80.NewBenchMarker)
+		return runner.RegisterBenchRunner(kayaclisten80.NewBenchRunner)
 	default:
 		return fmt.Errorf("no competition")
 	}
