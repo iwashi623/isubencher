@@ -18,10 +18,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	app := kinben.NewKinben(
+	app, err := kinben.NewKinben(
 		port,
 		isuconName,
 	)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
 	if err := app.StartServer(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

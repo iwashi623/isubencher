@@ -1,12 +1,17 @@
 package runner
 
 import (
+	"context"
+	"time"
+
 	"github.com/iwashi623/kinben/options"
 )
 
+const DefaultTimeout = 300 * time.Second
+
 type BenchRunner interface {
 	IsuconName() string
-	Run(opt *options.BenchOption) (string, error)
+	Run(ctx context.Context, opt *options.BenchOption) (string, error)
 }
 
 var br BenchRunner
@@ -18,10 +23,9 @@ func RegisterBenchRunner(f BenchCreateFunc) (err error) {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
-func Run(opt *options.BenchOption) (string, error) {
-	return br.Run(opt)
+func Run(ctx context.Context, opt *options.BenchOption) (string, error) {
+	return br.Run(ctx, opt)
 }

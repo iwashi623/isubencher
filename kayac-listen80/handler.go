@@ -1,6 +1,7 @@
 package kayaclisten80
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/iwashi623/kinben/options"
@@ -8,7 +9,10 @@ import (
 )
 
 func BenchHandler(w http.ResponseWriter, r *http.Request) {
-	targetHost := r.URL.Query().Get("target-host")
+	ctx, cancel := context.WithTimeout(r.Context(), runner.DefaultTimeout)
+	defer cancel()
+
+	targetHost := r.URL.Query().Get("target-ip")
 	if targetHost == "" {
 		http.Error(w, "target-ip is required", http.StatusBadRequest)
 		return
@@ -18,7 +22,7 @@ func BenchHandler(w http.ResponseWriter, r *http.Request) {
 		targetHost,
 	)
 
-	out, err := runner.Run(opt)
+	out, err := runner.Run(ctx, opt)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

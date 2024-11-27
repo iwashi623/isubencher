@@ -1,6 +1,7 @@
 package kayaclisten80
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -14,19 +15,19 @@ const (
 	IsuconName = "kayac-listen80"
 )
 
-type listen80Bench struct {
+type listen80BenchRunner struct {
 }
 
 func NewBenchRunner() (runner.BenchRunner, error) {
-	return &listen80Bench{}, nil
+	return &listen80BenchRunner{}, nil
 }
 
-func (bm *listen80Bench) IsuconName() string {
+func (bm *listen80BenchRunner) IsuconName() string {
 	return IsuconName
 }
 
-func (bm *listen80Bench) Run(opt *options.BenchOption) (string, error) {
-	cmd := exec.Command("./bench", "-target-url", opt.GetTargetHost())
+func (bm *listen80BenchRunner) Run(ctx context.Context, opt *options.BenchOption) (string, error) {
+	cmd := exec.CommandContext(ctx, "./bench", "-target-url", opt.GetTargetHost())
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
