@@ -26,7 +26,7 @@ func (bm *listen80Bench) IsuconName() string {
 }
 
 func (bm *listen80Bench) Run(opt *options.BenchOption) (string, error) {
-	cmd := exec.Command("./bench", "-target-url", opt.GetBenchProtcol()+"://"+opt.GetTargetHost())
+	cmd := exec.Command("./bench", "-target-url", opt.GetTargetHost())
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {

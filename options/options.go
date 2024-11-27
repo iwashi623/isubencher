@@ -11,12 +11,10 @@ type BenchOption struct {
 
 func NewBenchOption(
 	targetHost string,
-	benchProtcol string,
 	opt ...OptionFunc,
 ) *BenchOption {
 	option := &BenchOption{
-		targetHost:   targetHost,
-		benchProtcol: benchProtcol,
+		targetHost: targetHost,
 	}
 
 	for _, o := range opt {
