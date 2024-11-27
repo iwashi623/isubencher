@@ -6,17 +6,26 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/iwashi623/isubencher/options"
+	"github.com/iwashi623/kinben/bench"
+	"github.com/iwashi623/kinben/options"
 )
 
-type BenchMarker struct {
+const (
+	IsuconName = "kayac-listen80"
+)
+
+type listen80Bench struct {
 }
 
-func NewBenchMarker() (*BenchMarker, error) {
-	return &BenchMarker{}, nil
+func NewBenchMarker() (bench.BenchMarker, error) {
+	return &listen80Bench{}, nil
 }
 
-func (bm *BenchMarker) Run(opt *options.BenchOption) (string, error) {
+func (bm *listen80Bench) IsuconName() string {
+	return IsuconName
+}
+
+func (bm *listen80Bench) Run(opt *options.BenchOption) (string, error) {
 	cmd := exec.Command("./bench", "-target-url", opt.GetBenchProtcol()+"://"+opt.GetTargetHost())
 
 	out, err := cmd.CombinedOutput()

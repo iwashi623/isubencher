@@ -14,7 +14,7 @@ WORKDIR /app
 COPY . /app/
 
 RUN go mod download -x
-RUN go build -o /app/isubencher /app/cmd/isubencher/main.go
+RUN go build -o /app/kinben /app/cmd/kinben/main.go
 
 
 # ---------------------------------------------------------------------
@@ -30,6 +30,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends
 
 COPY --from=bench-builder /app/bench /app/bench
 COPY --from=bench-builder /app/data /app/data
-COPY --from=main-builder /app/isubencher /app/isubencher
+COPY --from=main-builder /app/kinben /app/kinben
 
-CMD [ "/app/isubencher" ]
+CMD [ "/app/kinben" ]

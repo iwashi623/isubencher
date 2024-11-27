@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/iwashi623/isubencher"
+	"github.com/iwashi623/kinben"
 )
 
 func main() {
@@ -18,7 +18,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	app := isubencher.NewIsubencher(
+	app := kinben.NewKinben(
 		port,
 		isuconName,
 	)
