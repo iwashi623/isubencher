@@ -8,6 +8,7 @@ import (
 	"github.com/iwashi623/kinben/options"
 	"github.com/iwashi623/kinben/response"
 	kinbenrunner "github.com/iwashi623/kinben/runner"
+	"github.com/iwashi623/kinben/teamsheet"
 )
 
 type listen80Hander struct {
@@ -16,6 +17,7 @@ type listen80Hander struct {
 
 func NewHandler(
 	runner kinbenrunner.Runner,
+	sheet teamsheet.TeamSheet,
 ) *listen80Hander {
 	return &listen80Hander{
 		runner: runner,

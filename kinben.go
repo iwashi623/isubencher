@@ -10,8 +10,9 @@ import (
 	"syscall"
 	"time"
 
-	kayaclisten80 "github.com/iwashi623/kinben/kayac-listen80"
 	"github.com/iwashi623/kinben/response"
+	kayaclisten80 "github.com/iwashi623/kinben/runner/kayac-listen80"
+	"github.com/iwashi623/kinben/teamsheet/spreadsheet"
 )
 
 type BenchHandler interface {
@@ -20,10 +21,8 @@ type BenchHandler interface {
 
 const DefaultTimeout = 300 * time.Second
 
-var benchHandlers = map[string]BenchHandler{
-	kayaclisten80.IsuconName: kayaclisten80.NewHandler(
-		kayaclisten80.NewBenchRunner(),
-	),
+var benchHandlers = map[string]func() BenchHandler{
+	kayaclisten80.IsuconName: WrapKayaclisten80NewHandler,
 }
 
 type kinben struct {
@@ -63,7 +62,7 @@ func (k *kinben) registerRoutes(mux *http.ServeMux) error {
 
 func newHandler(name string) (BenchHandler, error) {
 	if h, exists := benchHandlers[name]; exists {
-		return h, nil
+		return h(), nil
 	}
 	return nil, fmt.Errorf("no competition")
 }
@@ -116,4 +115,10 @@ func (k *kinben) StartServer() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	return k.s.Shutdown(ctx)
+}
+
+func WrapKayaclisten80NewHandler() BenchHandler {
+	runner := kayaclisten80.NewBenchRunner()
+	sheet := spreadsheet.NewSpreadsheet()
+	return kayaclisten80.NewHandler(runner, sheet)
 }
