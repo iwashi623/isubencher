@@ -5,20 +5,21 @@ import (
 	"time"
 
 	"github.com/iwashi623/kinben/options"
+	"github.com/iwashi623/kinben/result"
 )
 
 const DefaultTimeout = 300 * time.Second
 
-type BenchRunner interface {
+type Runner interface {
 	IsuconName() string
-	Run(ctx context.Context, opt *options.BenchOption) (*BenchResult, error)
+	Run(ctx context.Context, opt *options.BenchOption) (*result.BenchResult, error)
 }
 
-var br BenchRunner
+var br Runner
 
-type BenchCreateFunc func() (BenchRunner, error)
+type RunnerCreateFunc func() (Runner, error)
 
-func RegisterBenchRunner(f BenchCreateFunc) (err error) {
+func RegisterBenchRunner(f RunnerCreateFunc) (err error) {
 	br, err = f()
 	if err != nil {
 		return err
@@ -26,14 +27,6 @@ func RegisterBenchRunner(f BenchCreateFunc) (err error) {
 	return nil
 }
 
-func Run(ctx context.Context, opt *options.BenchOption) (*BenchResult, error) {
+func Run(ctx context.Context, opt *options.BenchOption) (*result.BenchResult, error) {
 	return br.Run(ctx, opt)
-}
-
-type BenchResult struct {
-	IsuconName string `json:"isucon_name"`
-	Target     string `json:"target"`
-	Score      int    `json:"score"`
-	Result     string `json:"result"`
-	Output     string `json:"output"`
 }

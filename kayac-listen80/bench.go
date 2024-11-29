@@ -9,11 +9,10 @@ import (
 	"os/exec"
 	"regexp"
 	"strconv"
-	"strings"
 	"sync"
 
 	"github.com/iwashi623/kinben/options"
-	"github.com/iwashi623/kinben/runner"
+	kinbenResult "github.com/iwashi623/kinben/result"
 )
 
 const (
@@ -23,7 +22,7 @@ const (
 type listen80BenchRunner struct {
 }
 
-func NewBenchRunner() (runner.BenchRunner, error) {
+func NewBenchRunner() (*listen80BenchRunner, error) {
 	return &listen80BenchRunner{}, nil
 }
 
@@ -31,7 +30,7 @@ func (bm *listen80BenchRunner) IsuconName() string {
 	return IsuconName
 }
 
-func (bm *listen80BenchRunner) Run(ctx context.Context, opt *options.BenchOption) (*runner.BenchResult, error) {
+func (bm *listen80BenchRunner) Run(ctx context.Context, opt *options.BenchOption) (*kinbenResult.BenchResult, error) {
 	cmd := exec.CommandContext(ctx, "./bench", "-target-url", opt.GetTargetHost())
 
 	// 標準出力と標準エラーを取得
@@ -83,7 +82,7 @@ func (bm *listen80BenchRunner) Run(ctx context.Context, opt *options.BenchOption
 	return result, nil
 }
 
-func (bm *listen80BenchRunner) parseBenchResult(logOutput, target string) (*runner.BenchResult, error) {
+func (bm *listen80BenchRunner) parseBenchResult(logOutput, target string) (*kinbenResult.BenchResult, error) {
 	// SCOREの正規表現
 	scoreRegex := regexp.MustCompile(`SCORE:\s*(-?\d+)`)
 	// RESULTの正規表現
@@ -107,11 +106,11 @@ func (bm *listen80BenchRunner) parseBenchResult(logOutput, target string) (*runn
 	result := resultMatch[1]
 
 	// BenchResultを作成
-	return &runner.BenchResult{
-		IsuconName: bm.IsuconName(),
+	return &kinbenResult.BenchResult{
+		IsuconName: IsuconName,
 		Target:     target,
 		Score:      score,
-		Result:     strings.TrimSpace(result),
+		Result:     result,
 		Output:     logOutput,
 	}, nil
 }
