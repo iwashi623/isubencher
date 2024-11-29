@@ -11,7 +11,7 @@ const DefaultTimeout = 300 * time.Second
 
 type BenchRunner interface {
 	IsuconName() string
-	Run(ctx context.Context, opt *options.BenchOption) (string, error)
+	Run(ctx context.Context, opt *options.BenchOption) (*BenchResult, error)
 }
 
 var br BenchRunner
@@ -26,6 +26,14 @@ func RegisterBenchRunner(f BenchCreateFunc) (err error) {
 	return nil
 }
 
-func Run(ctx context.Context, opt *options.BenchOption) (string, error) {
+func Run(ctx context.Context, opt *options.BenchOption) (*BenchResult, error) {
 	return br.Run(ctx, opt)
+}
+
+type BenchResult struct {
+	IsuconName string `json:"isucon_name"`
+	Target     string `json:"target"`
+	Score      int    `json:"score"`
+	Result     string `json:"result"`
+	Output     string `json:"output"`
 }
