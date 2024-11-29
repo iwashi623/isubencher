@@ -1,11 +1,13 @@
-package result
+package response
 
 import (
 	"bytes"
 	"encoding/json"
+
+	"github.com/iwashi623/kinben/runner"
 )
 
-type BenchResult struct {
+type BenchResponse struct {
 	IsuconName string `json:"isucon_name"`
 	Target     string `json:"target"`
 	Score      int    `json:"score"`
@@ -13,7 +15,15 @@ type BenchResult struct {
 	Output     string `json:"output"`
 }
 
-func (bm *BenchResult) ToJSON() ([]byte, error) {
+func NewBenchResponse(
+	result *runner.BenchResult,
+) *BenchResponse {
+	return &BenchResponse{
+		IsuconName: result.IsuconName,
+	}
+}
+
+func (bm *BenchResponse) ToJSON() ([]byte, error) {
 	w := &bytes.Buffer{}
 	err := json.NewEncoder(w).Encode(bm)
 	if err != nil {

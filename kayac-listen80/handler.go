@@ -6,17 +6,26 @@ import (
 	"net/http"
 
 	"github.com/iwashi623/kinben/options"
-	"github.com/iwashi623/kinben/runner"
+	"github.com/iwashi623/kinben/response"
+	kinbenrunner "github.com/iwashi623/kinben/runner"
 )
 
 type listen80Hander struct {
+	runner kinbenrunner.Runner
 }
 
-func NewHandler() *listen80Hander {
-	return &listen80Hander{}
+func NewHandler(
+	runner kinbenrunner.Runner,
+) *listen80Hander {
+	return &listen80Hander{
+		runner: runner,
+	}
 }
 
-func (h *listen80Hander) Handle(ctx context.Context, req *http.Request) ([]byte, error) {
+func (h *listen80Hander) Handle(
+	ctx context.Context,
+	req *http.Request,
+) (*response.BenchResponse, error) {
 	targetHost := req.URL.Query().Get("target-host")
 	if targetHost == "" {
 		return nil, errors.New("target-host is required")
@@ -26,18 +35,13 @@ func (h *listen80Hander) Handle(ctx context.Context, req *http.Request) ([]byte,
 		targetHost,
 	)
 
-	result, err := runner.Run(ctx, opt)
-	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
-			return nil, errors.New("request timed out")
-		}
-		return nil, err
-	}
-
-	json, err := result.ToJSON()
+	result, err := h.runner.Run(ctx, opt)
 	if err != nil {
 		return nil, err
 	}
 
-	return json, nil
+	if result == nil {
+		return nil, errors.New("result is nil")
+	}
+	return response.NewBenchResponse(result), nil
 }

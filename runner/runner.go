@@ -2,28 +2,19 @@ package runner
 
 import (
 	"context"
-	"time"
 
 	"github.com/iwashi623/kinben/options"
-	"github.com/iwashi623/kinben/result"
 )
-
-const DefaultTimeout = 300 * time.Second
 
 type Runner interface {
 	IsuconName() string
-	Run(ctx context.Context, opt *options.BenchOption) (*result.BenchResult, error)
+	Run(ctx context.Context, opt *options.BenchOption) (*BenchResult, error)
 }
 
-var br Runner
-
-type RunnerCreateFunc func() (Runner, error)
-
-func RegisterBenchRunner(r Runner) (err error) {
-	br = r
-	return nil
-}
-
-func Run(ctx context.Context, opt *options.BenchOption) (*result.BenchResult, error) {
-	return br.Run(ctx, opt)
+type BenchResult struct {
+	IsuconName string
+	Target     string
+	Score      int
+	Result     string
+	Output     string
 }

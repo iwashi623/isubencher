@@ -2,30 +2,28 @@ package kinben
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	kayaclisten80 "github.com/iwashi623/kinben/kayac-listen80"
-	"github.com/iwashi623/kinben/runner"
+	"github.com/iwashi623/kinben/response"
 )
 
 type BenchHandler interface {
-	Handle(ctx context.Context, req *http.Request) ([]byte, error)
+	Handle(ctx context.Context, req *http.Request) (*response.BenchResponse, error)
 }
 
-type benchDefinition struct {
-	benchRunner runner.Runner
-	handler     BenchHandler
-}
+const DefaultTimeout = 300 * time.Second
 
-var definitions = map[string]*benchDefinition{
-	kayaclisten80.IsuconName: {
-		benchRunner: WrapKayaclisten80NewBenchRunner(),
-		handler:     WrapKayaclisten80NewBenchHandler(),
-	},
+var benchHandlers = map[string]BenchHandler{
+	kayaclisten80.IsuconName: kayaclisten80.NewHandler(
+		kayaclisten80.NewBenchRunner(),
+	),
 }
 
 type kinben struct {
@@ -50,19 +48,7 @@ func NewKinben(
 	}
 	k.s.Handler = mux
 
-	err := RegisterBenchRunner(isuconName)
-	if err != nil {
-		return nil, err
-	}
-
 	return k, nil
-}
-
-func RegisterBenchRunner(isuconName string) error {
-	if bd, exists := definitions[isuconName]; exists {
-		return runner.RegisterBenchRunner(bd.benchRunner)
-	}
-	return fmt.Errorf("no competition")
 }
 
 func (k *kinben) registerRoutes(mux *http.ServeMux) error {
@@ -71,24 +57,28 @@ func (k *kinben) registerRoutes(mux *http.ServeMux) error {
 		return fmt.Errorf("failed to create handler: %w", err)
 	}
 
-	mux.HandleFunc("/bench", k.createBenchHandler(h))
+	mux.HandleFunc("/bench", k.createBenchHandlerFunc(h))
 	return nil
 }
 
 func newHandler(name string) (BenchHandler, error) {
-	if bd, exists := definitions[name]; exists {
-		return bd.handler, nil
+	if h, exists := benchHandlers[name]; exists {
+		return h, nil
 	}
 	return nil, fmt.Errorf("no competition")
 }
 
-func (k *kinben) createBenchHandler(h BenchHandler) http.HandlerFunc {
+func (k *kinben) createBenchHandlerFunc(h BenchHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), runner.DefaultTimeout)
+		ctx, cancel := context.WithTimeout(r.Context(), DefaultTimeout)
 		defer cancel()
 
 		result, err := h.Handle(ctx, r)
 		if err != nil {
+			if errors.Is(err, context.DeadlineExceeded) {
+				http.Error(w, "request timed out", http.StatusRequestTimeout)
+				return
+			}
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -96,8 +86,14 @@ func (k *kinben) createBenchHandler(h BenchHandler) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 
+		res, err := result.ToJSON()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		// resultをjsonで返す
-		if _, err := w.Write(result); err != nil {
+		if _, err := w.Write(res); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -112,7 +108,7 @@ func (k *kinben) StartServer() error {
 	}()
 
 	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	<-stop
 	fmt.Println("Shutting down server...")
@@ -120,12 +116,4 @@ func (k *kinben) StartServer() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	return k.s.Shutdown(ctx)
-}
-
-func WrapKayaclisten80NewBenchRunner() runner.Runner {
-	return kayaclisten80.NewBenchRunner()
-}
-
-func WrapKayaclisten80NewBenchHandler() BenchHandler {
-	return kayaclisten80.NewHandler()
 }
