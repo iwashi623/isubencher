@@ -12,9 +12,9 @@ func BenchHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), runner.DefaultTimeout)
 	defer cancel()
 
-	targetHost := r.URL.Query().Get("target-ip")
+	targetHost := r.URL.Query().Get("target-host")
 	if targetHost == "" {
-		http.Error(w, "target-ip is required", http.StatusBadRequest)
+		http.Error(w, "target-host is required", http.StatusBadRequest)
 		return
 	}
 
