@@ -19,11 +19,8 @@ var br Runner
 
 type RunnerCreateFunc func() (Runner, error)
 
-func RegisterBenchRunner(f RunnerCreateFunc) (err error) {
-	br, err = f()
-	if err != nil {
-		return err
-	}
+func RegisterBenchRunner(r Runner) (err error) {
+	br = r
 	return nil
 }
 

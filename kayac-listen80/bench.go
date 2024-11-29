@@ -22,8 +22,8 @@ const (
 type listen80BenchRunner struct {
 }
 
-func NewBenchRunner() (*listen80BenchRunner, error) {
-	return &listen80BenchRunner{}, nil
+func NewBenchRunner() *listen80BenchRunner {
+	return &listen80BenchRunner{}
 }
 
 func (bm *listen80BenchRunner) IsuconName() string {

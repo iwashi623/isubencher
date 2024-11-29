@@ -2,8 +2,6 @@ package kinben
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -11,22 +9,21 @@ import (
 	"time"
 
 	kayaclisten80 "github.com/iwashi623/kinben/kayac-listen80"
-	"github.com/iwashi623/kinben/options"
 	"github.com/iwashi623/kinben/runner"
 )
 
 type BenchHandler interface {
-	Handle(req *http.Request) error
+	Handle(ctx context.Context, req *http.Request) ([]byte, error)
 }
 
 type benchDefinition struct {
-	benchRunner runner.RunnerCreateFunc
+	benchRunner runner.Runner
 	handler     BenchHandler
 }
 
 var definitions = map[string]*benchDefinition{
 	kayaclisten80.IsuconName: {
-		benchRunner: WrapKayaclisten80NewBenchRunner,
+		benchRunner: WrapKayaclisten80NewBenchRunner(),
 		handler:     WrapKayaclisten80NewBenchHandler(),
 	},
 }
@@ -40,17 +37,25 @@ func NewKinben(
 	port string,
 	isuconName string,
 ) (*kinben, error) {
+	k := &kinben{
+		s: &http.Server{
+			Addr: ":" + port,
+		},
+		isuconName: isuconName,
+	}
+
+	mux := http.NewServeMux()
+	if err := k.registerRoutes(mux); err != nil {
+		return nil, err
+	}
+	k.s.Handler = mux
+
 	err := RegisterBenchRunner(isuconName)
 	if err != nil {
 		return nil, err
 	}
 
-	return &kinben{
-		s: &http.Server{
-			Addr: ":" + port,
-		},
-		isuconName: isuconName,
-	}, nil
+	return k, nil
 }
 
 func RegisterBenchRunner(isuconName string) error {
@@ -60,13 +65,46 @@ func RegisterBenchRunner(isuconName string) error {
 	return fmt.Errorf("no competition")
 }
 
-func (k *kinben) StartServer() error {
-	mux := http.NewServeMux()
-	if err := k.registerRoutes(mux); err != nil {
-		return err
+func (k *kinben) registerRoutes(mux *http.ServeMux) error {
+	h, err := newHandler(k.isuconName)
+	if err != nil {
+		return fmt.Errorf("failed to create handler: %w", err)
 	}
-	k.s.Handler = mux
 
+	mux.HandleFunc("/bench", k.createBenchHandler(h))
+	return nil
+}
+
+func newHandler(name string) (BenchHandler, error) {
+	if bd, exists := definitions[name]; exists {
+		return bd.handler, nil
+	}
+	return nil, fmt.Errorf("no competition")
+}
+
+func (k *kinben) createBenchHandler(h BenchHandler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), runner.DefaultTimeout)
+		defer cancel()
+
+		result, err := h.Handle(ctx, r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+
+		// resultをjsonで返す
+		if _, err := w.Write(result); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+func (k *kinben) StartServer() error {
 	go func() {
 		if err := k.s.ListenAndServe(); err != http.ErrServerClosed {
 			fmt.Printf("Server error: %v\n", err)
@@ -84,59 +122,7 @@ func (k *kinben) StartServer() error {
 	return k.s.Shutdown(ctx)
 }
 
-func (k *kinben) registerRoutes(mux *http.ServeMux) error {
-	h, err := newHandler(k.isuconName)
-	if err != nil {
-		return fmt.Errorf("failed to create handler: %w", err)
-	}
-	mux.HandleFunc("/bench", k.createBenchHandler(h))
-	return nil
-}
-
-func newHandler(name string) (BenchHandler, error) {
-	if bd, exists := definitions[name]; exists {
-		return bd.handler, nil
-	}
-	return nil, fmt.Errorf("no competition")
-}
-
-func (k *kinben) createBenchHandler(h BenchHandler) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), runner.DefaultTimeout)
-		defer cancel()
-
-		targetHost := r.URL.Query().Get("target-host")
-		if targetHost == "" {
-			http.Error(w, "target-host is required", http.StatusBadRequest)
-			return
-		}
-
-		opt := options.NewBenchOption(
-			targetHost,
-		)
-
-		result, err := runner.Run(ctx, opt)
-		if err != nil {
-			if errors.Is(err, context.DeadlineExceeded) {
-				http.Error(w, "Request timed out", http.StatusGatewayTimeout)
-				return
-			}
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-
-		// resultをjsonで返す
-		if err := json.NewEncoder(w).Encode(result); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
-}
-
-func WrapKayaclisten80NewBenchRunner() (runner.Runner, error) {
+func WrapKayaclisten80NewBenchRunner() runner.Runner {
 	return kayaclisten80.NewBenchRunner()
 }
 
