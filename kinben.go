@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/iwashi623/kinben/exporter/mackerel"
 	"github.com/iwashi623/kinben/response"
 	kayaclisten80 "github.com/iwashi623/kinben/runner/kayac-listen80"
 	"github.com/iwashi623/kinben/teamsheet/spreadsheet"
@@ -120,5 +121,6 @@ func (k *kinben) StartServer() error {
 func WrapKayaclisten80NewHandler() BenchHandler {
 	runner := kayaclisten80.NewBenchRunner()
 	sheet := spreadsheet.NewSpreadsheet()
-	return kayaclisten80.NewHandler(runner, sheet)
+	mackerel := mackerel.NewMackerel()
+	return kayaclisten80.NewHandler(runner, sheet, mackerel)
 }
