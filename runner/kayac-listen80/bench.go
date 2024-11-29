@@ -33,7 +33,6 @@ func (bm *listen80BenchRunner) IsuconName() string {
 func (bm *listen80BenchRunner) Run(ctx context.Context, opt *options.BenchOption) (*runner.BenchResult, error) {
 	cmd := exec.CommandContext(ctx, "./bench", "-target-url", opt.GetTargetHost())
 
-	// 標準出力と標準エラーを取得
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stdout pipe: %w", err)
@@ -78,17 +77,11 @@ func (bm *listen80BenchRunner) Run(ctx context.Context, opt *options.BenchOption
 		return nil, fmt.Errorf("failed to parse bench result: %w", err)
 	}
 
-	// 標準出力の結果を文字列として返す
 	return result, nil
 }
 
 func (bm *listen80BenchRunner) parseBenchResult(logOutput, target string) (*runner.BenchResult, error) {
-	// SCOREの正規表現
 	scoreRegex := regexp.MustCompile(`SCORE:\s*(-?\d+)`)
-	// RESULTの正規表現
-	resultRegex := regexp.MustCompile(`RESULT:\s*(.*)`)
-
-	// スコアを抽出
 	scoreMatch := scoreRegex.FindStringSubmatch(logOutput)
 	if scoreMatch == nil {
 		return nil, fmt.Errorf("failed to parse score")
@@ -98,7 +91,7 @@ func (bm *listen80BenchRunner) parseBenchResult(logOutput, target string) (*runn
 		return nil, fmt.Errorf("invalid score value: %w", err)
 	}
 
-	// 結果を抽出
+	resultRegex := regexp.MustCompile(`RESULT:\s*(.*)`)
 	resultMatch := resultRegex.FindStringSubmatch(logOutput)
 	if resultMatch == nil {
 		return nil, fmt.Errorf("failed to parse result")

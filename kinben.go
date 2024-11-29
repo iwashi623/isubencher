@@ -92,7 +92,6 @@ func (k *kinben) createBenchHandlerFunc(h BenchHandler) http.HandlerFunc {
 			return
 		}
 
-		// resultをjsonで返す
 		if _, err := w.Write(res); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

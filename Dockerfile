@@ -1,10 +1,8 @@
-# kayac-listen80-builderステージ
 FROM golang:1.23-bullseye AS bench-builder
 WORKDIR /app
 COPY . /app/
 ARG ISUCON_NAME='kayac-listen80'
 
-# Makefileの実行を実行して、ベンチマーカーのビルドと必要なデータの取得
 RUN bash bench-build.sh
 
 # ---------------------------------------------------------------------
