@@ -20,6 +20,10 @@ func NewBenchResponse(
 ) *BenchResponse {
 	return &BenchResponse{
 		IsuconName: result.IsuconName,
+		Target:     result.Target,
+		Score:      result.Score,
+		Result:     result.Result,
+		Output:     result.Output,
 	}
 }
 

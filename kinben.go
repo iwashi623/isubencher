@@ -10,9 +10,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/iwashi623/kinben/exporter"
 	"github.com/iwashi623/kinben/exporter/mackerel"
 	"github.com/iwashi623/kinben/response"
 	kayaclisten80 "github.com/iwashi623/kinben/runner/kayac-listen80"
+	"github.com/iwashi623/kinben/teamsheet"
 	"github.com/iwashi623/kinben/teamsheet/spreadsheet"
 )
 
@@ -22,7 +24,7 @@ type BenchHandler interface {
 
 const DefaultTimeout = 300 * time.Second
 
-var benchHandlers = map[string]func() BenchHandler{
+var benchHandlers = map[string]func(s teamsheet.TeamSheet, e exporter.Exporter) BenchHandler{
 	kayaclisten80.IsuconName: WrapKayaclisten80NewHandler,
 }
 
@@ -52,7 +54,7 @@ func NewKinben(
 }
 
 func (k *kinben) registerRoutes(mux *http.ServeMux) error {
-	h, err := newHandler(k.isuconName)
+	h, err := k.newHandler(k.isuconName)
 	if err != nil {
 		return fmt.Errorf("failed to create handler: %w", err)
 	}
@@ -61,9 +63,12 @@ func (k *kinben) registerRoutes(mux *http.ServeMux) error {
 	return nil
 }
 
-func newHandler(name string) (BenchHandler, error) {
+func (k *kinben) newHandler(name string) (BenchHandler, error) {
+	sheet := spreadsheet.NewSpreadsheet()
+	mackerel := mackerel.NewMackerel()
+
 	if h, exists := benchHandlers[name]; exists {
-		return h(), nil
+		return h(sheet, mackerel), nil
 	}
 	return nil, fmt.Errorf("no competition")
 }
@@ -83,15 +88,14 @@ func (k *kinben) createBenchHandlerFunc(h BenchHandler) http.HandlerFunc {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-
 		res, err := result.ToJSON()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
 		if _, err := w.Write(res); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -117,9 +121,7 @@ func (k *kinben) StartServer() error {
 	return k.s.Shutdown(ctx)
 }
 
-func WrapKayaclisten80NewHandler() BenchHandler {
+func WrapKayaclisten80NewHandler(s teamsheet.TeamSheet, e exporter.Exporter) BenchHandler {
 	runner := kayaclisten80.NewBenchRunner()
-	sheet := spreadsheet.NewSpreadsheet()
-	mackerel := mackerel.NewMackerel()
-	return kayaclisten80.NewHandler(runner, sheet, mackerel)
+	return kayaclisten80.NewHandler(runner, s, e)
 }
