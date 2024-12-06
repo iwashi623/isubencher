@@ -15,8 +15,8 @@ import (
 	"github.com/iwashi623/kinben/kayaclisten80"
 	"github.com/iwashi623/kinben/response"
 	"github.com/iwashi623/kinben/runner"
+	"github.com/iwashi623/kinben/spreadsheet"
 	"github.com/iwashi623/kinben/teamsheet"
-	"github.com/iwashi623/kinben/teamsheet/spreadsheet"
 )
 
 type BenchHandler interface {

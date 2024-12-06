@@ -47,8 +47,12 @@ func (r *runner) Run(ctx context.Context, opt *options.BenchOption) (*BenchResul
 		return nil, fmt.Errorf("failed to extract IP address: %w", err)
 	}
 
-	teamName := r.sheet.GetTeamNameByIP(hostIP)
+	teamName, err := r.sheet.GetTeamNameByIP(hostIP)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get team name: %w", err)
+	}
 
+	fmt.Printf("team name: %s\n", teamName)
 	result, err := r.runner.Run(ctx, opt)
 	if err != nil {
 		return nil, err
