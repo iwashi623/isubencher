@@ -65,7 +65,12 @@ func NewKinben(
 	if err := k.registerRoutes(mux); err != nil {
 		return nil, err
 	}
-	k.s.Handler = mux
+	k.s.Handler = setCustomMiddleware(func() {
+		fmt.Printf("Server started on port %s\n", port)
+		fmt.Printf("Isucon: %s\n", isuconName)
+		fmt.Printf("TeamBoard: %s\n", tb.GetTeamBoardName())
+		fmt.Printf("Exporter: %s\n", exporter.GetExporterName())
+	}, mux)
 
 	return k, nil
 }
