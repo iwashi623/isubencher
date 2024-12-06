@@ -22,6 +22,7 @@ func main() {
 		port,
 		isuconName,
 		kinben.CreateTeamboard,
+		kinben.CreateExporter,
 	)
 	if err != nil {
 		fmt.Println(err)

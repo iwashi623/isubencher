@@ -29,6 +29,10 @@ func NewSpreadsheet(
 	}
 }
 
+func (s *Spreadsheet) GetTeamBoardName() string {
+	return "Google SpreadSheet"
+}
+
 func (s *Spreadsheet) GetTeamNameByIP(ctx context.Context, ip string) (string, error) {
 	unixTime := time.Now().Unix()
 	filename := fmt.Sprintf("%s-%d.csv", ip, unixTime)

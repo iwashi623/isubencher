@@ -6,17 +6,22 @@ import (
 
 type TeamBoard interface {
 	GetTeamNameByIP(ctx context.Context, ip string) (string, error)
+	GetTeamBoardName() string
 }
 
-type NilTeamBoard struct {
+type teamBoard struct {
 }
 
-func NewNilTeamBoard() *NilTeamBoard {
-	return &NilTeamBoard{}
+func NewNilTeamBoard() TeamBoard {
+	return &teamBoard{}
 }
 
-func (n *NilTeamBoard) GetTeamNameByIP(ctx context.Context, ip string) (string, error) {
+func (n *teamBoard) GetTeamNameByIP(ctx context.Context, ip string) (string, error) {
 	return "", nil
+}
+
+func (n *teamBoard) GetTeamBoardName() string {
+	return "nil teamboard"
 }
 
 type TeamBoardCreateFunc func() (TeamBoard, error)

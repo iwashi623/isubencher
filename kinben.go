@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/iwashi623/kinben/exporter"
-	"github.com/iwashi623/kinben/exporter/mackerel"
 	"github.com/iwashi623/kinben/kayaclisten80"
+	"github.com/iwashi623/kinben/mackerel"
 	"github.com/iwashi623/kinben/response"
 	"github.com/iwashi623/kinben/runner"
 	"github.com/iwashi623/kinben/spreadsheet"
@@ -33,16 +33,23 @@ type kinben struct {
 	isuconName string
 	s          *http.Server
 	teamboard  teamboard.TeamBoard
+	exporter   exporter.Exporter
 }
 
 func NewKinben(
 	port string,
 	isuconName string,
 	tbcf teamboard.TeamBoardCreateFunc,
+	ecf exporter.ExporterCreateFunc,
 ) (*kinben, error) {
 	tb, err := tbcf()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create teamboard: %w", err)
+	}
+
+	exporter, err := ecf()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create exporter: %w", err)
 	}
 
 	k := &kinben{
@@ -51,6 +58,7 @@ func NewKinben(
 		},
 		isuconName: isuconName,
 		teamboard:  tb,
+		exporter:   exporter,
 	}
 
 	mux := http.NewServeMux()
@@ -73,10 +81,8 @@ func (k *kinben) registerRoutes(mux *http.ServeMux) error {
 }
 
 func (k *kinben) newHandler(name string) (BenchHandler, error) {
-	mackerel := mackerel.NewMackerel()
-
 	if f, exists := handlerCreateFunc[name]; exists {
-		return f(k.teamboard, mackerel), nil
+		return f(k.teamboard, k.exporter), nil
 	}
 	return nil, fmt.Errorf("no competition")
 }
@@ -146,4 +152,15 @@ func CreateTeamboard() (teamboard.TeamBoard, error) {
 	}
 
 	return teamboard.NewNilTeamBoard(), nil
+}
+
+func CreateExporter() (exporter.Exporter, error) {
+	apiKey := os.Getenv("MACKEREL_API_KEY")
+	appName := os.Getenv("MACKEREL_APP_NAME")
+	if apiKey != "" && appName != "" {
+		client := mackerel.NewMackerelClient(apiKey)
+		return mackerel.NewMackerelExporter(appName, client), nil
+	}
+
+	return exporter.NewExporter(), nil
 }
