@@ -1,6 +1,7 @@
 package spreadsheet
 
 import (
+	"context"
 	"encoding/csv"
 	"fmt"
 	"io"
@@ -12,18 +13,20 @@ import (
 )
 
 type Spreadsheet struct {
+	ID         string
+	httpClient *http.Client
 }
 
 var _ teamsheet.TeamSheet = (*Spreadsheet)(nil)
 
-func NewSpreadsheet() *Spreadsheet {
+func NewSpreadsheet() teamsheet.TeamSheet {
 	return &Spreadsheet{}
 }
 
-func (s *Spreadsheet) GetTeamNameByIP(ip string) (string, error) {
+func (s *Spreadsheet) GetTeamNameByIP(ctx context.Context, ip string) (string, error) {
 	unixTime := time.Now().Unix()
 	filename := fmt.Sprintf("%s-%d.csv", ip, unixTime)
-	err := s.donwloadCSV(filename)
+	err := s.donwloadCSV(ctx, s.httpClient, filename)
 	if err != nil {
 		return "", fmt.Errorf("failed to download CSV: %w", err)
 	}
@@ -49,14 +52,19 @@ func (s *Spreadsheet) GetTeamNameByIP(ip string) (string, error) {
 	return teamName, nil
 }
 
-func (s *Spreadsheet) donwloadCSV(filename string) error {
-	url := "https://docs.google.com/spreadsheets/d/%s/export?format=csv"
+func (s *Spreadsheet) donwloadCSV(ctx context.Context, c *http.Client, filename string) error {
+	url := fmt.Sprintf("https://docs.google.com/spreadsheets/d/%s/export?format=csv", s.ID)
 
-	resp, err := http.Get(url)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return fmt.Errorf("failed to get spreadsheet: %w", err)
 	}
-	defer resp.Body.Close()
+
+	res, err := c.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to get response: %w", err)
+	}
+	defer res.Body.Close()
 
 	f, err := os.Create(filename)
 	if err != nil {
@@ -64,7 +72,7 @@ func (s *Spreadsheet) donwloadCSV(filename string) error {
 	}
 	defer f.Close()
 
-	_, err = io.Copy(f, resp.Body)
+	_, err = io.Copy(f, res.Body)
 	if err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
 	}
