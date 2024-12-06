@@ -61,7 +61,7 @@ func (r *runner) Run(ctx context.Context, opt *options.BenchOption) (*BenchResul
 		return nil, err
 	}
 
-	if err := r.exporter.Export(exporter.ExportParams{
+	if err := r.exporter.Export(ctx, exporter.ExportParams{
 		TeamName: teamName,
 		Score:    result.Score,
 	}); err != nil {

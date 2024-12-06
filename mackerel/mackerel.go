@@ -1,6 +1,7 @@
 package mackerel
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -31,7 +32,7 @@ func NewMackerelExporter(
 	}
 }
 
-func (m *MackerelExporter) Export(params exporter.ExportParams) error {
+func (m *MackerelExporter) Export(ctx context.Context, params exporter.ExportParams) error {
 	fmt.Println(params)
 	err := m.Client.PostServiceMetricValues(m.ServiceName, []*mackerel.MetricValue{
 		{

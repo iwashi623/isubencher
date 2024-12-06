@@ -1,7 +1,9 @@
 package exporter
 
+import "context"
+
 type Exporter interface {
-	Export(params ExportParams) error
+	Export(ctx context.Context, params ExportParams) error
 	GetExporterName() string
 }
 
@@ -17,7 +19,7 @@ func NewExporter() *exporter {
 	return &exporter{}
 }
 
-func (e *exporter) Export(params ExportParams) error {
+func (e *exporter) Export(ctx context.Context, params ExportParams) error {
 	return nil
 }
 
