@@ -16,7 +16,7 @@ import (
 	"github.com/iwashi623/kinben/response"
 	"github.com/iwashi623/kinben/runner"
 	"github.com/iwashi623/kinben/spreadsheet"
-	"github.com/iwashi623/kinben/teamsheet"
+	"github.com/iwashi623/kinben/teamboard"
 )
 
 type BenchHandler interface {
@@ -25,24 +25,32 @@ type BenchHandler interface {
 
 const DefaultTimeout = 300 * time.Second
 
-var benchHandlers = map[string]func(s teamsheet.TeamSheet, e exporter.Exporter) BenchHandler{
+var handlerCreateFunc = map[string]func(s teamboard.TeamBoard, e exporter.Exporter) BenchHandler{
 	kayaclisten80.IsuconName: WrapKayaclisten80NewHandler,
 }
 
 type kinben struct {
 	isuconName string
 	s          *http.Server
+	teamboard  teamboard.TeamBoard
 }
 
 func NewKinben(
 	port string,
 	isuconName string,
+	tbcf teamboard.TeamBoardCreateFunc,
 ) (*kinben, error) {
+	tb, err := tbcf()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create teamboard: %w", err)
+	}
+
 	k := &kinben{
 		s: &http.Server{
 			Addr: ":" + port,
 		},
 		isuconName: isuconName,
+		teamboard:  tb,
 	}
 
 	mux := http.NewServeMux()
@@ -65,11 +73,10 @@ func (k *kinben) registerRoutes(mux *http.ServeMux) error {
 }
 
 func (k *kinben) newHandler(name string) (BenchHandler, error) {
-	sheet := spreadsheet.NewSpreadsheet()
 	mackerel := mackerel.NewMackerel()
 
-	if h, exists := benchHandlers[name]; exists {
-		return h(sheet, mackerel), nil
+	if f, exists := handlerCreateFunc[name]; exists {
+		return f(k.teamboard, mackerel), nil
 	}
 	return nil, fmt.Errorf("no competition")
 }
@@ -122,12 +129,21 @@ func (k *kinben) StartServer() error {
 	return k.s.Shutdown(ctx)
 }
 
-func WrapKayaclisten80NewHandler(s teamsheet.TeamSheet, e exporter.Exporter) BenchHandler {
+func WrapKayaclisten80NewHandler(tb teamboard.TeamBoard, e exporter.Exporter) BenchHandler {
 	return kayaclisten80.NewHandler(
 		runner.NewRunner(
 			kayaclisten80.NewRunner(),
-			s,
+			tb,
 			e,
 		),
 	)
+}
+
+func CreateTeamboard() (teamboard.TeamBoard, error) {
+	spreadsheetID := os.Getenv("SPREADSHEET_ID")
+	if spreadsheetID != "" {
+		return spreadsheet.NewSpreadsheet(spreadsheetID, &http.Client{}), nil
+	}
+
+	return teamboard.NewNilTeamBoard(), nil
 }

@@ -21,6 +21,7 @@ func main() {
 	app, err := kinben.NewKinben(
 		port,
 		isuconName,
+		kinben.CreateTeamboard,
 	)
 	if err != nil {
 		fmt.Println(err)

@@ -9,18 +9,24 @@ import (
 	"os"
 	"time"
 
-	"github.com/iwashi623/kinben/teamsheet"
+	"github.com/iwashi623/kinben/teamboard"
 )
 
 type Spreadsheet struct {
-	ID         string
+	id         string
 	httpClient *http.Client
 }
 
-var _ teamsheet.TeamSheet = (*Spreadsheet)(nil)
+var _ teamboard.TeamBoard = (*Spreadsheet)(nil)
 
-func NewSpreadsheet() teamsheet.TeamSheet {
-	return &Spreadsheet{}
+func NewSpreadsheet(
+	id string,
+	httpClient *http.Client,
+) teamboard.TeamBoard {
+	return &Spreadsheet{
+		id:         id,
+		httpClient: httpClient,
+	}
 }
 
 func (s *Spreadsheet) GetTeamNameByIP(ctx context.Context, ip string) (string, error) {
@@ -53,7 +59,7 @@ func (s *Spreadsheet) GetTeamNameByIP(ctx context.Context, ip string) (string, e
 }
 
 func (s *Spreadsheet) donwloadCSV(ctx context.Context, c *http.Client, filename string) error {
-	url := fmt.Sprintf("https://docs.google.com/spreadsheets/d/%s/export?format=csv", s.ID)
+	url := fmt.Sprintf("https://docs.google.com/spreadsheets/d/%s/export?format=csv", s.id)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {

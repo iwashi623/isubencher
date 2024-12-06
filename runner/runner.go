@@ -7,7 +7,7 @@ import (
 
 	"github.com/iwashi623/kinben/exporter"
 	"github.com/iwashi623/kinben/options"
-	"github.com/iwashi623/kinben/teamsheet"
+	"github.com/iwashi623/kinben/teamboard"
 )
 
 type Runner interface {
@@ -25,18 +25,18 @@ type BenchResult struct {
 
 type runner struct {
 	runner   Runner
-	sheet    teamsheet.TeamSheet
+	tb       teamboard.TeamBoard
 	exporter exporter.Exporter
 }
 
 func NewRunner(
 	r Runner,
-	s teamsheet.TeamSheet,
+	tb teamboard.TeamBoard,
 	e exporter.Exporter,
 ) *runner {
 	return &runner{
 		runner:   r,
-		sheet:    s,
+		tb:       tb,
 		exporter: e,
 	}
 }
@@ -47,19 +47,20 @@ func (r *runner) Run(ctx context.Context, opt *options.BenchOption) (*BenchResul
 		return nil, fmt.Errorf("failed to extract IP address: %w", err)
 	}
 
-	teamName, err := r.sheet.GetTeamNameByIP(ctx, hostIP)
+	teamName, err := r.tb.GetTeamNameByIP(ctx, hostIP)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get team name: %w", err)
+	}
+	fmt.Println(r.tb)
+
+	if teamName == "" {
+		return nil, fmt.Errorf("no team name found for IP: %s", hostIP)
 	}
 
 	fmt.Printf("team name: %s\n", teamName)
 	result, err := r.runner.Run(ctx, opt)
 	if err != nil {
 		return nil, err
-	}
-
-	if teamName == "" {
-		return nil, fmt.Errorf("no team name found for IP: %s", hostIP)
 	}
 
 	if err := r.exporter.Export(exporter.ExportParams{
