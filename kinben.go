@@ -12,8 +12,9 @@ import (
 
 	"github.com/iwashi623/kinben/exporter"
 	"github.com/iwashi623/kinben/exporter/mackerel"
+	"github.com/iwashi623/kinben/kayaclisten80"
 	"github.com/iwashi623/kinben/response"
-	kayaclisten80 "github.com/iwashi623/kinben/runner/kayac-listen80"
+	"github.com/iwashi623/kinben/runner"
 	"github.com/iwashi623/kinben/teamsheet"
 	"github.com/iwashi623/kinben/teamsheet/spreadsheet"
 )
@@ -122,6 +123,11 @@ func (k *kinben) StartServer() error {
 }
 
 func WrapKayaclisten80NewHandler(s teamsheet.TeamSheet, e exporter.Exporter) BenchHandler {
-	runner := kayaclisten80.NewBenchRunner()
-	return kayaclisten80.NewHandler(runner, s, e)
+	return kayaclisten80.NewHandler(
+		runner.NewRunner(
+			kayaclisten80.NewRunner(),
+			s,
+			e,
+		),
+	)
 }

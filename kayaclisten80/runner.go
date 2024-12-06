@@ -22,7 +22,9 @@ const (
 type listen80BenchRunner struct {
 }
 
-func NewBenchRunner() *listen80BenchRunner {
+var _ runner.Runner = &listen80BenchRunner{}
+
+func NewRunner() runner.Runner {
 	return &listen80BenchRunner{}
 }
 
