@@ -161,10 +161,9 @@ func CreateTeamboard() (teamboard.TeamBoard, error) {
 
 func CreateExporter() (exporter.Exporter, error) {
 	apiKey := os.Getenv("MACKEREL_API_KEY")
-	appName := os.Getenv("MACKEREL_APP_NAME")
-	if apiKey != "" && appName != "" {
-		client := mackerel.NewMackerelClient(apiKey)
-		return mackerel.NewMackerelExporter(appName, client), nil
+	serviceName := os.Getenv("MACKEREL_SERVICE_NAME")
+	if apiKey != "" && serviceName != "" {
+		return mackerel.NewMackerelExporter(apiKey, serviceName), nil
 	}
 
 	return exporter.NewExporter(), nil

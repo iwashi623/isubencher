@@ -22,13 +22,12 @@ func NewMackerelClient(apiKey string) *mackerel.Client {
 }
 
 func NewMackerelExporter(
+	apiKey string,
 	serviceName string,
-	client *mackerel.Client,
 ) *MackerelExporter {
-
 	return &MackerelExporter{
 		ServiceName: serviceName,
-		Client:      client,
+		Client:      NewMackerelClient(apiKey),
 	}
 }
 
