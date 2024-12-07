@@ -24,7 +24,10 @@ ENV PORT=${PORT}
 ARG ISUCON_NAME='kayac-listen80'
 ENV ISUCON_NAME=${ISUCON_NAME}
 
-RUN apt-get update && apt-get install -y --no-install-recommends
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates openssl && \
+    update-ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY --from=bench-builder /app/bench /app/bench
 COPY --from=bench-builder /app/data /app/data
